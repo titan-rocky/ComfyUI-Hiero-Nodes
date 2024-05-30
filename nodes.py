@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-from discord_webhook import DiscordWebhook
+from discord_webhook import DiscordWebhook, DiscordEmbed
 
 def count_frames(dir):
     image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".bmp"}
@@ -51,7 +51,12 @@ class PostViaWebhook:
                     "STRING",
                     {"default": webhook_url, "multiline": False},
                 ),
-                "enable": (["True", "False"],)
+                "threadID": ("STRING", {"default": "", "multiline": False}),
+                "enable": (["True", "False"],),
+            },
+            "optional": {
+                "pos": ("STRING",{"forceInput": True}),
+                "neg": ("STRING",{"forceInput": True}),
             },
             "hidden": {"prompt": "PROMPT"},
         }
@@ -61,7 +66,7 @@ class PostViaWebhook:
     FUNCTION = "post_via_webhook"
     CATEGORY = "Hiero Nodes"
 
-    def post_via_webhook(self, images, URL, enable, prompt):
+    def post_via_webhook(self, images, URL, enable, prompt, pos="", neg="", threadID=""):
         """Function for sending image to discord channel"""
         comfy_path = Path.cwd()
         
@@ -77,11 +82,33 @@ class PostViaWebhook:
         data = {"webhook_url": URL}
         with open(settings_path, "w") as file:
             json.dump(data, file, indent=4)
+    
+        def create_embed(pos, neg, content=""):
+            embed = DiscordEmbed(title="ComfyUI", description="", color="7289da")
+            embed.set_author(name="ComfyUI")
+            embed.set_title("Image Prompt")
+            embed.set_description(content)
+            if pos:
+                embed.add_embed_field(name="### Positive Prompt", value=pos)
+            if neg:
+                embed.add_embed_field(name="### Negative Prompt", value=neg)
+            embed.set_timestamp()
+            return embed
+
 
         if enable == "True":
             temp_dir = tempfile.mkdtemp()
             parsed_uri = URL.replace("\\", "")
-            wh = DiscordWebhook(url=parsed_uri, content="")
+            xzy=""
+            if (pos != ""):
+                xzy += f"### Positive Prompt : ```{pos}```\n"
+            if (neg != ""):
+                xzy += f"### Negative Prompt : ```{neg}```\n"
+            
+            if (threadID == ""):
+                wh = DiscordWebhook(url=parsed_uri, content=xzy, embeds=[])
+            else :
+                wh = DiscordWebhook(url=parsed_uri, content=xzy, thread_id=threadID, embeds=[])
             counter = 0
             cur_date = datetime.now().strftime('%d-%m-%Y-%H-%M-%S')
 
@@ -100,8 +127,8 @@ class PostViaWebhook:
                 file_name = f"ComfyUI_{cur_date}_{counter}.png"
                 file_path = os.path.join(temp_dir, file_name)
                 img_params = {
-                    "png": {"compress_level": 4},
-                    "webp": {"method": 6, "loseless": False, "quality": 80},
+                    "png": {"compress_level": 0},
+                    "webp": {"method": 6, "loseless": True, "quality": 80},
                     "jpg": {"format": "JPEG"},
                     "tif": {"format": "TIFF"},
                 }
@@ -168,3 +195,24 @@ class LoadPromptTravelFile:
             count += 1
         
         return (prompts, )
+
+class TextToString:
+    """Dummy node to connect text to multiple string input"""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "text": ("STRING", {"default": "", "multiline": True}),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURNS_NAMES = ("text",)
+    OUTPUT_NODE = True
+    FUNCTION = "text_to_string"
+    CATEGORY = "Hiero Nodes"
+
+    def text_to_string(self, text):
+        return (text,)
+

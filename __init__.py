@@ -64,6 +64,7 @@ NODE_CLASS_MAPPINGS = {
     "Post to Discord w/ Webhook": PostViaWebhook,
     "Save Prompt Travel file": SavePromptTravelFile,
     "Load Prompt Travel file": LoadPromptTravelFile,
+    "Dummy TextToString" : TextToString
 }
 
 print("\033[34mComfyUI Hiero Nodes: \033[92mLoaded\033[0m")
