@@ -1,0 +1,15 @@
+[project]
+name = "comfyui-hiero-nodes"
+description = "Random useful nodes I've devloped."
+version = "1.0.0"
+license = "LICENSE"
+dependencies = ["numpy", "Pillow", "discord-webhook"]
+
+[project.urls]
+Repository = "https://github.com/Hiero207/ComfyUI-Hiero-Nodes"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = "hierophant"
+DisplayName = "ComfyUI-Hiero-Nodes"
+Icon = ""
